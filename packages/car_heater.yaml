@@ -1,0 +1,118 @@
+switch:
+  - platform: template
+    switches:
+      heater_script:
+        value_template: "{{ is_state('switch.heater_enable_automation', 'on') }}"
+        turn_on:
+          service: python_script.car_heater
+        turn_off:
+          service: python_script.car_heater
+      enable_heater_automation:
+        value_template: "{{ is_state('binary_sensor.heater_enable_automation', 'on') }}"
+        turn_on:
+          service: python_script.car_heater
+        turn_off:
+          service: python_script.car_heater
+
+#sensor:
+#  - platform: template
+#    sensors:
+      #heater_will_run_when_formatted:
+      #  friendly_name: "Motorvärmaren startas"
+      #  value_template: "{{ states('sensor.heater_will_run_when').strftime('%A') }}"
+      #  icon_template: mdi:av-timer
+
+input_datetime:
+  heater_departure_time_input:
+    name: Ange avresetid
+    has_date: false
+    has_time: true
+
+input_boolean:
+  enable_heater_automation:
+    name: "Starta motorvärmaren automatiskt"
+    icon: mdi:check-outline
+
+group:
+  car_heater_view:
+    name: Motorvärmaren
+    view: yes
+    control: hidden
+    icon: mdi:radiator
+    entities:
+      - group.car_heater_active
+      - group.car_heater_inactive
+
+  car_heater_inactive:
+    name: Motorvärmaren
+    control: hidden
+    entities:
+      - input_boolean.enable_heater_automation
+      - sensor.27_temperature
+      - switch.z2_switch_switch
+
+  car_heater_active:
+    name: Motorvärmaren
+    control: hidden
+    entities:
+      - input_boolean.enable_heater_automation
+      - input_datetime.heater_departure_time_input
+      - sensor.27_temperature
+      - sensor.heater_will_run_when
+      #- sensor.heater_will_run_when_formatted
+      - sensor.heater_departure_time
+      - switch.z2_switch_switch
+
+automation:
+  - alias: "Kör motorvärmarscriptet"
+    trigger:
+      platform: time
+      #every 5 minutes
+      minutes: '/5'
+      seconds: 00
+    action:
+      service: python_script.car_heater
+
+  - alias: "Kör motorvärmarscriptet när avresetid ändras"
+    trigger:
+      platform: state
+      entity_id: input_datetime.heater_departure_time_input
+    action:
+      service: python_script.car_heater
+
+  - alias: "Aktivera motorvärmarautomatik"
+    trigger:
+      platform: state
+      entity_id: input_boolean.enable_heater_automation
+      to: 'on'
+    action:
+      - service: group.set_visibility
+        entity_id: group.car_heater_active
+        data:
+          visible: True
+      - service: group.set_visibility
+        entity_id: group.car_heater_inactive
+        data:
+          visible: False
+      - service: python_script.car_heater
+
+  - alias: "Inaktivera motorvärmarautomatik"
+    trigger:
+      platform: state
+      entity_id: input_boolean.enable_heater_automation
+      to: 'off'
+    action:
+      - service: group.set_visibility
+        entity_id: group.car_heater_active
+        data:
+          visible: False
+      - service: group.set_visibility
+        entity_id: group.car_heater_inactive
+        data:
+          visible: True
+  - alias: 'Kör scriptet vid start av Hass för init'
+    trigger:
+      platform: homeassistant
+      event: start
+    action:
+      - service: python_script.car_heater
