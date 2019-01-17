@@ -1,0 +1,4 @@
+switch.z2_switch_switch:
+  icon: mdi:car-side
+  friendly_name: Motorvärmare
+  assumed_state: false

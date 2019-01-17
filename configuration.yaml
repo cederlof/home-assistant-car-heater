@@ -1,0 +1,13 @@
+homeassistant:
+  # Customization file
+  customize: !include customize.yaml
+  # Include all in packages folder
+  packages: !include_dir_named packages
+
+automation: !include automations.yaml
+python_script:
+
+notify:
+  - name: telegram
+    platform: telegram
+    chat_id: !secret telegram_chat_id

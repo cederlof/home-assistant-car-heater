@@ -1,0 +1,55 @@
+switch:
+  - platform: template
+    switches:
+      heater_script:
+        value_template: "{{ is_state('switch.heater_enable_automation', 'on') }}"
+        turn_on:
+          service: python_script.car_heater
+        turn_off:
+          service: python_script.car_heater
+      enable_heater_automation:
+        value_template: "{{ is_state('binary_sensor.heater_enable_automation', 'on') }}"
+        turn_on:
+          service: python_script.car_heater
+        turn_off:
+          service: python_script.car_heater
+
+input_datetime:
+  heater_departure_time_input:
+    name: Ange avresetid
+    has_date: false
+    has_time: true
+
+input_boolean:
+  enable_heater_automation:
+    name: "Starta motorvärmaren automatiskt"
+    icon: mdi:check-outline
+
+group:
+  car_heater_view:
+    name: Motorvärmaren
+    view: yes
+    control: hidden
+    icon: mdi:radiator
+    entities:
+      - group.car_heater_active
+      - group.car_heater_inactive
+
+  car_heater_inactive:
+    name: Motorvärmaren
+    control: hidden
+    entities:
+      - input_boolean.enable_heater_automation
+      - sensor.27_temperature
+      - switch.z2_switch_switch
+
+  car_heater_active:
+    name: Motorvärmaren
+    control: hidden
+    entities:
+      - input_boolean.enable_heater_automation
+      - input_datetime.heater_departure_time_input
+      - sensor.27_temperature
+      - sensor.heater_will_run_when
+      - sensor.heater_departure_time
+      - switch.z2_switch_switch

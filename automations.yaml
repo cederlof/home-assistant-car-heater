@@ -1,0 +1,68 @@
+  - alias: "Kör motorvärmarscriptet"
+    trigger:
+      platform: time
+      #every 5 minutes
+      minutes: '/5'
+      seconds: 00
+    action:
+      service: python_script.car_heater
+
+  - alias: "Kör motorvärmarscriptet när avresetid ändras"
+    trigger:
+      platform: state
+      entity_id: input_datetime.heater_departure_time_input
+    action:
+      service: python_script.car_heater
+
+  - alias: "Heater automation activated"
+    trigger:
+      platform: state
+      entity_id: input_boolean.enable_heater_automation
+      to: 'on'
+    action:
+      - service: group.set_visibility
+        entity_id: group.car_heater_active
+        data:
+          visible: True
+      - service: group.set_visibility
+        entity_id: group.car_heater_inactive
+        data:
+          visible: False
+      - service: python_script.car_heater
+
+  - alias: "Heater automation deactivated"
+    trigger:
+      platform: state
+      entity_id: input_boolean.enable_heater_automation
+      to: 'off'
+    action:
+      - service: group.set_visibility
+        entity_id: group.car_heater_active
+        data:
+          visible: False
+      - service: group.set_visibility
+        entity_id: group.car_heater_inactive
+        data:
+          visible: True
+
+  - alias: 'Show heater groups when starting HASS'
+    trigger:
+      platform: homeassistant
+      event: start
+    condition:
+      condition: template
+      value_template: "{{ is_state('input_boolean.enable_heater_automation', 'on') }}"
+    action:
+      - service: automation.trigger
+        entity_id: automation.heater_automation_activated
+
+  - alias: 'Hide heater groups when starting HASS'
+    trigger:
+      platform: homeassistant
+      event: start
+    condition:
+      condition: template
+      value_template: "{{ is_state('input_boolean.enable_heater_automation', 'off') }}"
+    action:
+      - service: automation.trigger
+        entity_id: automation.heater_automation_deactivated
